@@ -9,6 +9,10 @@ plugins {
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
+    alias(libs.plugins.compose)
+    alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "2.0.20"
+
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -26,7 +30,19 @@ repositories {
     // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
     intellijPlatform {
         defaultRepositories()
+        localPlatformArtifacts()
+        maven("https://packages.jetbrains.team/maven/p/kpm/public/")
     }
+    google {
+        mavenContent {
+            includeGroupAndSubgroups("androidx")
+            includeGroupAndSubgroups("com.android")
+            includeGroupAndSubgroups("com.google")
+        }
+        maven("https://packages.jetbrains.team/maven/p/firework/dev")
+        maven("https://packages.jetbrains.team/maven/p/kpm/public/")
+    }
+
 }
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
@@ -47,6 +63,17 @@ dependencies {
         pluginVerifier()
         zipSigner()
         testFramework(TestFrameworkType.Platform)
+
+        implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-243:0.27.0")
+        api(compose.desktop.currentOs) {
+//            exclude(group = "org.jetbrains.compose.material")
+            exclude(group = "org.jetbrains.kotlinx")
+        }
+        implementation("org.json:json:20240303")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+        implementation("io.github.theapache64:rebugger:1.0.0-rc03"){
+            exclude(group = "org.jetbrains.kotlinx")
+        }
     }
 }
 
@@ -88,9 +115,9 @@ intellijPlatform {
     }
 
     signing {
-        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
-        privateKey = providers.environmentVariable("PRIVATE_KEY")
-        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+        certificateChain = providers.environmentVariable("JSON_SMITH_CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("JSON_SMITH_PRIVATE_KEY")
+        password = providers.environmentVariable("JSON_SMITH_PRIVATE_KEY_PASSWORD")
     }
 
     publishing {
