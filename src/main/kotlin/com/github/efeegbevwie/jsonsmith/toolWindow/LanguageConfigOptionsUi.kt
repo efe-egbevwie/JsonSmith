@@ -1,11 +1,10 @@
 package com.github.efeegbevwie.jsonsmith.toolWindow
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage
@@ -66,7 +65,7 @@ private fun JavaConfigOptionsUi(
         ) {
             Text(text = "${config.serializationFrameWork?.displayName()}")
         }
-
+        Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = modifier.horizontalScroll(state = rememberScrollState()),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -114,7 +113,9 @@ private fun KotlinConfigOptionsUi(
             Text(text = config.serializationFrameWork.displayName())
         }
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             CheckboxRow(
                 checked = config.allPropertiesOptional,
                 onCheckedChange = { checked ->
@@ -124,7 +125,7 @@ private fun KotlinConfigOptionsUi(
             ) {
                 Text(text = "Optional Properties")
             }
-
+            Spacer(modifier = Modifier.width(14.dp))
             CheckboxRow(
                 checked = config.saveClassesAsSeparateFiles,
                 onCheckedChange = { checked ->

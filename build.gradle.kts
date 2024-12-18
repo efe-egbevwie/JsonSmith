@@ -70,41 +70,22 @@ dependencies {
 
     }
 
-    val osName = System.getProperty("os.name")
-    val targetOs = when {
-        osName == "Mac OS X" -> "macos"
-        osName.startsWith("Win") -> "windows"
-        osName.startsWith("Linux") -> "linux"
-        else -> error("Unsupported OS: $osName")
-    }
-
-    val osArch = System.getProperty("os.arch")
-    val targetArch = when (osArch) {
-        "x86_64", "amd64" -> "x64"
-        "aarch64" -> "arm64"
-        else -> error("Unsupported arch: $osArch")
-    }
-
-    val version = "0.8.9" // or any more recent version
-    val target = "${targetOs}-${targetArch}"
     implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-241:0.27.0")
-    implementation(compose.desktop.currentOs) {
-//            exclude(group = "org.jetbrains.compose.material")
+
+    implementation(compose.desktop.macos_arm64){
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation("org.json:json:20240303")
+    implementation(compose.desktop.macos_x64){
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+    implementation(compose.desktop.windows_x64){
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+    implementation(compose.desktop.linux_x64){
+        exclude(group = "org.jetbrains.kotlinx")
+    }
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"){
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-    }
-    implementation("org.jetbrains.skiko:skiko-awt-runtime-$target:$version"){
-        exclude(group = "org.jetbrains.kotlinx")
-
-    }
-    implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-x64:$version"){
-        exclude(group = "org.jetbrains.kotlinx")
-    }
-    implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:$version"){
-        exclude(group = "org.jetbrains.kotlinx")
     }
 }
 

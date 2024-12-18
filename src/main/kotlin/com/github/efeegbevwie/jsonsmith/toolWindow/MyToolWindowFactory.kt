@@ -123,7 +123,7 @@ private fun JsonSmithToolWindowContent(
             Text(text = targetLanguage.displayName())
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         LanguageConfig(
             targetLanguage = targetLanguage,
@@ -131,7 +131,7 @@ private fun JsonSmithToolWindowContent(
             onConfigChanged = onLanguageConfigChanged
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedButton(
             onClick = {
