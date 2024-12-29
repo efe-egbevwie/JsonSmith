@@ -3,5 +3,10 @@
 # JsonSmith Changelog
 
 ## [Unreleased]
-### Added
-- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+
+## [1.0.2] - 2024-12-29
+
+Added support for go (golang)
+
+[Unreleased]: https://github.com/efe-egbevwie/JsonSmith/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/efe-egbevwie/JsonSmith/commits/v1.0.2
