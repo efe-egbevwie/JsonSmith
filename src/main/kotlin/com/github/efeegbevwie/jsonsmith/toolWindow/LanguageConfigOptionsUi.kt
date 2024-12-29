@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage
+import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Go.GoConfigOptions
 import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Java.JavaConfigOptions
 import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Java.JavaSerializationFrameWorks
 import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Kotlin.KotlinConfigOptions
@@ -37,6 +38,12 @@ fun LanguageConfig(
             onConfigChanged = onConfigChanged,
             modifier = modifier,
         )
+
+        is TargetLanguage.Go -> goConfigOptionsUi(
+            config = config as GoConfigOptions,
+            onConfigChanged = onConfigChanged,
+            modifier = modifier,
+        )
     }
 }
 
@@ -46,7 +53,7 @@ private fun JavaConfigOptionsUi(
     onJavaConfigChanged: (JavaConfigOptions) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column (modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)){
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Dropdown(
             modifier = Modifier,
             menuContent = {
@@ -137,6 +144,25 @@ private fun KotlinConfigOptionsUi(
             }
         }
 
+    }
+}
+
+@Composable
+private fun goConfigOptionsUi(
+    config: GoConfigOptions,
+    onConfigChanged: (GoConfigOptions) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier) {
+        CheckboxRow(
+            checked = config.saveClassesAsSeparateFiles,
+            onCheckedChange = { checked ->
+                val newConfig = config.copy(saveClassesAsSeparateFiles = checked)
+                onConfigChanged(newConfig)
+            }
+        ) {
+            Text(text = "Separate files")
+        }
     }
 }
 

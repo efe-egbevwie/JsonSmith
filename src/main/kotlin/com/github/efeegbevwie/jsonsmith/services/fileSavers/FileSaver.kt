@@ -35,7 +35,7 @@ fun saveGeneratedTypesToFiles(
                 val classBody = classEntries.classBody
                 val fileName = "${className.ifEmpty { "JsonClass" }}$fileExtension"
                 val content = buildString {
-                    appendLine(parsedType.imports)
+                    parsedType.imports?.let { appendLine(it) }
                     append("\n")
                     appendLine(classBody)
                 }
@@ -47,8 +47,6 @@ fun saveGeneratedTypesToFiles(
                 )
             }
         return if (savedFiles.allFileSaved()) {
-            val fileEditorManager = FileEditorManager.getInstance(project)
-            fileEditorManager.openFile(virtualFile, true, true)
             SaveFileResult.Success
         } else {
             SaveFileResult.Failure
@@ -78,7 +76,7 @@ private fun saveFile(content: String, directoryPath: String, fileName: String, p
     }
     val targetFile = File(directoryPath, fileName)
     targetFile.writeText(content)
-    openFile(targetFile = targetFile, project = project)
+//    openFile(targetFile = targetFile, project = project)
     return targetFile.exists()
 }
 

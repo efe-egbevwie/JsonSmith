@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 
 val enabledTargetLanguages: ImmutableList<TargetLanguage> =
-    persistentListOf(TargetLanguage.Kotlin(), TargetLanguage.Java())
+    persistentListOf(TargetLanguage.Kotlin(), TargetLanguage.Java(), TargetLanguage.Go())
 
 
 @Stable
@@ -42,11 +42,21 @@ sealed class TargetLanguage(open var targetLanguageConfig: TargetLanguageConfig)
             val useArrays: Boolean = true,
             val serializationFrameWork: SerializationFrameWork? = JavaSerializationFrameWorks.Lombok,
         ) : TargetLanguageConfig
-        enum class JavaSerializationFrameWorks:SerializationFrameWork{
+
+        enum class JavaSerializationFrameWorks : SerializationFrameWork {
             Records,
             Lombok,
             PlainTypes
         }
+    }
+
+    data class Go(override var targetLanguageConfig: TargetLanguageConfig = GoConfigOptions()) :
+        TargetLanguage(targetLanguageConfig) {
+        data class GoConfigOptions(
+            override val saveClassesAsSeparateFiles: Boolean = false,
+            override val className: String = "JsonClass",
+            override val fileExtension: String = ".go",
+        ) : TargetLanguageConfig
     }
 
 }
@@ -56,5 +66,6 @@ fun TargetLanguage.displayName(): String {
     return when (this) {
         is TargetLanguage.Java -> "Java"
         is TargetLanguage.Kotlin -> "Kotlin"
+        is TargetLanguage.Go -> "Go"
     }
 }

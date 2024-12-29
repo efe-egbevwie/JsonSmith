@@ -11,7 +11,7 @@ fun parseJsonToJavaClass(
     json: String,
     className: String = "JsonClass",
     parsedClasses: LinkedHashMap<String, String> = LinkedHashMap(),
-    targetLanguageConfig: JavaConfigOptions
+    javaConfig: JavaConfigOptions
 ): ParsedType? {
     val jsonTrimmed = json.trim()
     return try {
@@ -20,14 +20,14 @@ fun parseJsonToJavaClass(
                 jsonObject = jsonElement,
                 className = className,
                 parsedClasses = parsedClasses,
-                config = targetLanguageConfig
+                config = javaConfig
             )
 
             is JsonArray -> parseJavaJsonArray(
                 jsonArray = jsonElement,
                 className = className,
                 parsedClasses = parsedClasses,
-                config = targetLanguageConfig
+                config = javaConfig
             )
 
             else -> null

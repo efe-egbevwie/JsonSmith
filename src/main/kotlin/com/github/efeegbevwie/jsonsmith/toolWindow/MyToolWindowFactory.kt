@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -195,7 +196,6 @@ private fun JsonSmithToolWindowContent(
 
                     }
                 }
-
             }
         }
     }
@@ -207,10 +207,11 @@ fun TypeItem(
     typeContent: String,
     showCopyIcon: Boolean,
     onCopyGeneratedTypeClicked: (type: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier.fillMaxWidth()
+        .padding(top = 8.dp, bottom = 8.dp)
 ) {
     Column(modifier = modifier) {
-        if (showCopyIcon){
+        if (showCopyIcon) {
             IconActionButton(
                 key = AllIconsKeys.Actions.Copy,
                 contentDescription = "Copy",
@@ -224,11 +225,13 @@ fun TypeItem(
                 }
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = typeContent,
-            modifier = Modifier
-        )
+        Spacer(modifier = Modifier.height(4.dp))
+        SelectionContainer {
+            Text(
+                text = typeContent.trimIndent(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

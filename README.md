@@ -21,6 +21,7 @@ Supported Languages:
   - Records (With jackson serializer)
   - Lombok (With jackson serializer)
   - Plain types (no serialization lib)
+### Go
 <br>
 Features:
  - Generate classes/types and preview them before saving

@@ -5,6 +5,7 @@ import androidx.compose.runtime.snapshotFlow
 import com.github.efeegbevwie.jsonsmith.services.fileSavers.SaveFileResult
 import com.github.efeegbevwie.jsonsmith.services.fileSavers.saveGeneratedTypesToFiles
 import com.github.efeegbevwie.jsonsmith.services.languageParsers.ParsedType
+import com.github.efeegbevwie.jsonsmith.services.languageParsers.parseJsonToGoStruct
 import com.github.efeegbevwie.jsonsmith.services.languageParsers.parseJsonToJavaClass
 import com.github.efeegbevwie.jsonsmith.services.languageParsers.parseJsonToKotlinClass
 import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage
@@ -87,6 +88,13 @@ class MyProjectService(project: Project) {
                         )
                     currentLanguageConfig.copy(targetLanguageConfig = newKotlinConfig)
                 }
+
+                is TargetLanguage.Go -> {
+                    val newGoConfig  = (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Go.GoConfigOptions).copy(
+                        className = formattedClassName
+                    )
+                    currentLanguageConfig.copy(targetLanguageConfig = newGoConfig)
+                }
             }
             targetLanguageFlow.update { newLanguageConfig }
         }
@@ -120,6 +128,7 @@ class MyProjectService(project: Project) {
             when (currentTargetLanguage) {
                 is TargetLanguage.Java -> TargetLanguage.Java(newConfig)
                 is TargetLanguage.Kotlin -> TargetLanguage.Kotlin(newConfig)
+                is TargetLanguage.Go  -> TargetLanguage.Go(newConfig)
             }
         }
         if (generatedTypeFlow.value?.stringRepresentation?.isNotEmpty() == true) {
@@ -134,13 +143,19 @@ class MyProjectService(project: Project) {
             is TargetLanguage.Java -> parseJsonToJavaClass(
                 className = targetLanguage.targetLanguageConfig.className.ifEmpty { "JsonClass" },
                 json = json,
-                targetLanguageConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Java.JavaConfigOptions
+                javaConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Java.JavaConfigOptions
             )
 
             is TargetLanguage.Kotlin -> parseJsonToKotlinClass(
                 className = targetLanguage.targetLanguageConfig.className.ifEmpty { "JsonClass" },
                 json = json,
                 kotlinConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Kotlin.KotlinConfigOptions
+            )
+
+            is TargetLanguage.Go -> parseJsonToGoStruct(
+                json = json,
+                structName = targetLanguage.targetLanguageConfig.className.ifEmpty { "JsonStruct" },
+                goConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Go.GoConfigOptions
             )
         }
 
@@ -199,7 +214,7 @@ class MyProjectService(project: Project) {
     }
 
 
-    sealed class JsonSmithEvent() {
+    sealed class JsonSmithEvent {
         open val message: String = ""
         open val timeOut: Duration = 3.seconds
         open val errorEvent: Boolean = false
