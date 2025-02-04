@@ -7,14 +7,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Go.GoConfigOptions
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Java.JavaConfigOptions
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Java.JavaSerializationFrameWorks
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Kotlin.KotlinConfigOptions
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage.Kotlin.KotlinSerializationFrameWorks
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguageConfig
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.displayName
+import com.efe.jsonSmith.targetLanguages.TargetLanguage
+import com.efe.jsonSmith.targetLanguages.TargetLanguage.*
+import com.efe.jsonSmith.targetLanguages.TargetLanguage.Go.*
+import com.efe.jsonSmith.targetLanguages.TargetLanguage.Java.*
+import com.efe.jsonSmith.targetLanguages.TargetLanguage.Kotlin.*
+import com.efe.jsonSmith.targetLanguages.TargetLanguageConfig
+import com.efe.jsonSmith.targetLanguages.displayName
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Text
@@ -27,19 +26,19 @@ fun LanguageConfig(
     modifier: Modifier = Modifier,
 ) {
     when (targetLanguage) {
-        is TargetLanguage.Java -> JavaConfigOptionsUi(
+        is Java -> JavaConfigOptionsUi(
             config = config as JavaConfigOptions,
             onJavaConfigChanged = onConfigChanged,
             modifier = modifier,
         )
 
-        is TargetLanguage.Kotlin -> KotlinConfigOptionsUi(
+        is Kotlin -> KotlinConfigOptionsUi(
             config = config as KotlinConfigOptions,
             onConfigChanged = onConfigChanged,
             modifier = modifier,
         )
 
-        is TargetLanguage.Go -> goConfigOptionsUi(
+        is Go -> goConfigOptionsUi(
             config = config as GoConfigOptions,
             onConfigChanged = onConfigChanged,
             modifier = modifier,

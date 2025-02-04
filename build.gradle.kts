@@ -11,8 +11,8 @@ plugins {
     alias(libs.plugins.kover) // Gradle Kover Plugin
     alias(libs.plugins.compose)
     alias(libs.plugins.composeCompiler)
-    kotlin("plugin.serialization") version "2.0.20"
 
+    kotlin("plugin.serialization") version "2.0.20"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -42,10 +42,12 @@ repositories {
         maven("https://packages.jetbrains.team/maven/p/firework/dev")
         maven("https://packages.jetbrains.team/maven/p/kpm/public/")
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        maven("https://packages.jetbrains.team/maven/p/firework/dev")
     }
 
 }
-
+configurations.forEach { it.exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core") }
 
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
@@ -70,22 +72,28 @@ dependencies {
 
     }
 
-    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-241:0.27.0")
+    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-241:0.27.0") {
+        exclude(group = "org.jetbrains.kotlinx")
+    }
 
-    implementation(compose.desktop.macos_arm64){
+    implementation(compose.desktop.macos_arm64) {
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation(compose.desktop.macos_x64){
+    implementation(compose.desktop.macos_x64) {
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation(compose.desktop.windows_x64){
+    implementation(compose.desktop.windows_x64) {
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation(compose.desktop.linux_x64){
+    implementation(compose.desktop.linux_x64) {
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"){
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3") {
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
+    implementation(files("libs/JsonSmith-jvm-1.0.0.jar"))
+    implementation(compose.components.resources) {
+        exclude(group = "org.jetbrains.kotlinx")
     }
 }
 
@@ -200,3 +208,7 @@ intellijPlatform {
     autoReload = true
 }
 
+compose.resources {
+    publicResClass = true
+    generateResClass = auto
+}

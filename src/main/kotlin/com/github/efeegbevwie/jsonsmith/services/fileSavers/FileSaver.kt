@@ -1,7 +1,7 @@
 package com.github.efeegbevwie.jsonsmith.services.fileSavers
 
-import com.github.efeegbevwie.jsonsmith.services.languageParsers.ParsedType
-import com.github.efeegbevwie.jsonsmith.services.targetLanguages.TargetLanguage
+import com.efe.jsonSmith.languageParsers.ParsedType
+import com.efe.jsonSmith.targetLanguages.TargetLanguage
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
