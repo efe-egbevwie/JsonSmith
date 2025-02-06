@@ -52,8 +52,6 @@ configurations.forEach { it.exclude("org.jetbrains.kotlinx", "kotlinx-coroutines
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-    testImplementation(libs.junit)
-
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
@@ -68,8 +66,6 @@ dependencies {
         pluginVerifier()
         zipSigner()
         testFramework(TestFrameworkType.Platform)
-
-
     }
 
     implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-241:0.27.0") {
@@ -95,6 +91,8 @@ dependencies {
     implementation(compose.components.resources) {
         exclude(group = "org.jetbrains.kotlinx")
     }
+
+    testImplementation(libs.bundles.testing)
 }
 
 // Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html
@@ -211,4 +209,8 @@ intellijPlatform {
 compose.resources {
     publicResClass = true
     generateResClass = auto
+}
+
+tasks.named("buildPlugin"){
+    dependsOn(tasks.named("test"))
 }

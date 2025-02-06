@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 
 
 @Service(Service.Level.PROJECT)
-class MyProjectService(project: Project) {
+class MyProjectService(val project: Project) {
 
     private val json = Json { prettyPrint = true; }
 
@@ -80,63 +80,6 @@ class MyProjectService(project: Project) {
         }
     }
 
-    private fun timeOutEvent(event: JsonSmithEvent, eventsFlow: MutableStateFlow<JsonSmithEvent?>) {
-        CoroutineScope(Dispatchers.Default).launch {
-            delay(event.timeOut)
-            if (eventsFlow.value?.equals(event) == true) {
-                eventsFlow.emit(null)
-            }
-        }
-    }
-
-
-    private suspend fun observeClassTitleText() {
-        snapshotFlow { classNameInput.text }.collect { newClassName ->
-            jsonParsingEventsFlow.removeErrorParsingState()
-            val formattedClassName: String = newClassName.toString().toClassNameCamelCase()
-            val newLanguageConfig = when (val currentLanguageConfig = targetLanguageFlow.value) {
-                is TargetLanguage.Java -> {
-                    val newJavaConfig =
-                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Java.JavaConfigOptions).copy(
-                            className = formattedClassName
-                        )
-
-                    currentLanguageConfig.copy(targetLanguageConfig = newJavaConfig)
-                }
-
-                is TargetLanguage.Kotlin -> {
-                    val newKotlinConfig =
-                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Kotlin.KotlinConfigOptions).copy(
-                            className = formattedClassName
-                        )
-                    currentLanguageConfig.copy(targetLanguageConfig = newKotlinConfig)
-                }
-
-                is TargetLanguage.Go -> {
-                    val newGoConfig =
-                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Go.GoConfigOptions).copy(
-                            className = formattedClassName
-                        )
-                    currentLanguageConfig.copy(targetLanguageConfig = newGoConfig)
-                }
-            }
-            targetLanguageFlow.update { newLanguageConfig }
-        }
-    }
-
-    private fun MutableStateFlow<JsonSmithEvent?>.removeErrorParsingState() {
-        if (this.value is JsonSmithEvent.JsonParsingFailed) {
-            this.update { null }
-        }
-    }
-
-    private suspend fun observeTargetLanguageChanges() {
-        targetLanguageFlow.collect {
-            val jsonHasBeenParsedAtLeastOnce = generatedTypeFlow.value != null
-            if (jsonHasBeenParsedAtLeastOnce) generateTypeFromJson(json = jsonInput.text.toString())
-        }
-    }
-
     fun getRandomNumber() = (1..100).random()
 
     fun setTargetLanguage(language: TargetLanguage) {
@@ -161,7 +104,7 @@ class MyProjectService(project: Project) {
     }
 
 
-    fun getJsonElement(json: String = jsonStructureInput.text.toString()) {
+    fun parseJsonStructure(json: String = jsonStructureInput.text.toString()) {
         try {
             jsonStructureParsingEventsFlow.removeErrorParsingState()
             val element = Json.parseToJsonElement(json)
@@ -232,7 +175,6 @@ class MyProjectService(project: Project) {
                 }
                 SaveFileResult.Failure
             }
-
             when (filesSaved) {
                 SaveFileResult.Success -> {
                     serviceCoroutineScope.launch {
@@ -246,7 +188,7 @@ class MyProjectService(project: Project) {
                     }
                 }
 
-                else -> {}
+                SaveFileResult.Cancelled -> {}
             }
         }
     }
@@ -262,6 +204,61 @@ class MyProjectService(project: Project) {
         }
     }
 
+    private fun timeOutEvent(event: JsonSmithEvent, eventsFlow: MutableStateFlow<JsonSmithEvent?>) {
+        CoroutineScope(Dispatchers.Default).launch {
+            delay(event.timeOut)
+            if (eventsFlow.value?.equals(event) == true) {
+                eventsFlow.emit(null)
+            }
+        }
+    }
+
+    private suspend fun observeClassTitleText() {
+        snapshotFlow { classNameInput.text }.collect { newClassName ->
+            jsonParsingEventsFlow.removeErrorParsingState()
+            val formattedClassName: String = newClassName.toString().toClassNameCamelCase()
+            val newLanguageConfig = when (val currentLanguageConfig = targetLanguageFlow.value) {
+                is TargetLanguage.Java -> {
+                    val newJavaConfig =
+                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Java.JavaConfigOptions).copy(
+                            className = formattedClassName
+                        )
+
+                    currentLanguageConfig.copy(targetLanguageConfig = newJavaConfig)
+                }
+
+                is TargetLanguage.Kotlin -> {
+                    val newKotlinConfig =
+                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Kotlin.KotlinConfigOptions).copy(
+                            className = formattedClassName
+                        )
+                    currentLanguageConfig.copy(targetLanguageConfig = newKotlinConfig)
+                }
+
+                is TargetLanguage.Go -> {
+                    val newGoConfig =
+                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Go.GoConfigOptions).copy(
+                            className = formattedClassName
+                        )
+                    currentLanguageConfig.copy(targetLanguageConfig = newGoConfig)
+                }
+            }
+            targetLanguageFlow.update { newLanguageConfig }
+        }
+    }
+
+    private fun MutableStateFlow<JsonSmithEvent?>.removeErrorParsingState() {
+        if (this.value is JsonSmithEvent.JsonParsingFailed) {
+            this.update { null }
+        }
+    }
+
+    private suspend fun observeTargetLanguageChanges() {
+        targetLanguageFlow.collect {
+            val jsonHasBeenParsedAtLeastOnce = generatedTypeFlow.value != null
+            if (jsonHasBeenParsedAtLeastOnce) generateTypeFromJson(json = jsonInput.text.toString())
+        }
+    }
 
     sealed class JsonSmithEvent {
         open val message: String = ""

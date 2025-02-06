@@ -47,7 +47,7 @@ class MyToolWindowFactory : ToolWindowFactory {
             val event: JsonSmithEvent? by service.jsonParsingEvents.collectAsState(initial = null)
 
             SwingBridgeTheme {
-                JsonSmithToolWindowContent(
+                JsonParsingToolWindowContent(
                     jsonInput = service.jsonInput,
                     className = service.classNameInput,
                     onFormatJsonClicked = { jsonInput ->
@@ -82,7 +82,7 @@ class MyToolWindowFactory : ToolWindowFactory {
                     jsonElement = jsonElement,
                     event = jsonStructureEvents,
                     onFormatJsonClicked = { service.formatJson(it) },
-                    onParseJsonStructureClicked = { service.getJsonElement() }
+                    onParseJsonStructureClicked = { service.parseJsonStructure() }
                 )
             }
         }
@@ -94,7 +94,7 @@ class MyToolWindowFactory : ToolWindowFactory {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun JsonSmithToolWindowContent(
+private fun JsonParsingToolWindowContent(
     jsonInput: TextFieldState,
     className: TextFieldState,
     generatedType: ParsedType? = null,
