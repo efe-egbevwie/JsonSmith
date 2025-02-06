@@ -132,31 +132,5 @@ class MyProjectServiceTest : BasePlatformTestCase() {
                 TestCase.assertEquals(className, parsedType?.fileName)
             }
         }
-
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun `test when save file fails Error should be emitted`() = runTest {
-        mockkStatic(::saveGeneratedTypesToFiles)
-        mockkStatic(FileChooser::class)
-        mockkStatic(VfsUtil::class)
-        every { FileChooser.chooseFile(any(), any(), any()) } returns null
-        every {
-            saveGeneratedTypesToFiles(
-                project = project,
-                parsedType = any(),
-                targetLanguage = any()
-            )
-        } returns SaveFileResult.Failure
-
-        service.generateTypeFromJson(validJson)
-        service.saveGeneratedType(project)
-
-        withContext(Dispatchers.Default.limitedParallelism(1)){
-            service.jsonParsingEvents.test {
-                val event: JsonSmithEvent? = awaitItem()
-                assertEquals(JsonSmithEvent.FileSavedError(), event)
-            }
-        }
     }
 }

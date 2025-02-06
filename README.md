@@ -1,8 +1,8 @@
 # JsonSmith
 
 ![Build](https://github.com/efe-egbevwie/JsonSmith/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/26124-jsonsmith)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/26124-jsonsmith)
 
 <!-- Plugin description -->
 Generate classes/types from json strings.
@@ -17,17 +17,23 @@ Supported Languages:
   - Nullable or non-nullable properties
   - Save classes into separate or one file
   <br>
+
 ### Java
   - Records (With jackson serializer)
   - Lombok (With jackson serializer)
   - Plain types (no serialization lib)
 ### Go
+
 <br>
-Features:
- - Generate classes/types and preview them before saving
- - Save generated types to your project or any folder on your computer
- - Copy all generated types or copy only the type/class you need
- - Easy configuration changes with Live preview
+
+## Features:
+- Generate classes/types and preview them before saving
+- View JSON structure tree
+- Format/prettify JSON
+- Save generated types to your project or any folder on your computer
+- Copy all generated types or copy only the type/class you need
+- Easy configuration changes with Live preview
+
 <!-- Plugin description end -->
 
 ## Installation
@@ -64,5 +70,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 <img src="screenshots/JsonSmith_3_screenshot.png">
 <br>
 <img src="screenshots/JsonSmith_4_screenshot.png">
+<br>
+<img src="screenshots/JsonSmith_5_screenshot.png">
 <br>
 
