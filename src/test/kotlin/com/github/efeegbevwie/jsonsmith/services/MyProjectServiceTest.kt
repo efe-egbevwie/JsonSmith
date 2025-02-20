@@ -5,18 +5,9 @@ import com.efe.jsonSmith.languageParsers.ParsedType
 import com.efe.jsonSmith.targetLanguages.TargetLanguage
 import com.efe.jsonSmith.targetLanguages.enabledTargetLanguages
 import com.github.efeegbevwie.jsonsmith.services.MyProjectService.JsonSmithEvent
-import com.github.efeegbevwie.jsonsmith.services.fileSavers.SaveFileResult
-import com.github.efeegbevwie.jsonsmith.services.fileSavers.saveGeneratedTypesToFiles
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import io.mockk.every
-import io.mockk.mockkStatic
 import junit.framework.TestCase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 

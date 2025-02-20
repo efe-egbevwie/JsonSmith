@@ -23,7 +23,6 @@ import com.github.efeegbevwie.jsonsmith.jsonsmith.generated.resources.numeric
 import com.github.efeegbevwie.jsonsmith.jsonsmith.generated.resources.string
 import com.github.efeegbevwie.jsonsmith.services.MyProjectService
 import com.github.efeegbevwie.jsonsmith.services.MyProjectService.JsonSmithEvent
-import com.intellij.json.psi.JsonLiteral
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -436,13 +435,6 @@ private fun JsonArrayTree(jsonArray: JsonArray, modifier: Modifier = Modifier) {
                     jsonElement = jsonElement,
                     fromJsonArray = true
                 )
-
-                is JsonLiteral -> JsonLeaf(
-                    key = index.toString(),
-                    value = jsonElement.jsonPrimitive.content,
-                    jsonPrimitive = jsonElement.jsonPrimitive
-                )
-
                 is JsonPrimitive -> JsonLeaf(
                     key = index.toString(),
                     value = jsonElement.jsonPrimitive.content,
@@ -555,7 +547,7 @@ private fun JsonObjectItem(
                         }
                     }
 
-                    is JsonLiteral -> {
+                    is JsonPrimitive -> {
                         JsonLeaf(
                             key = key.orEmpty(),
                             value = jsonElement.jsonPrimitive.content,

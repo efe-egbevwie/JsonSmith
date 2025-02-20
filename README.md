@@ -1,8 +1,8 @@
 # JsonSmith
 
 ![Build](https://github.com/efe-egbevwie/JsonSmith/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/26124-jsonsmith)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/26124-jsonsmith)
+[![Version](https://img.shields.io/jetbrains/plugin/v/26124-jsonsmith.svg)](https://plugins.jetbrains.com/plugin/26124-jsonsmith)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/26124-jsonsmith.svg)](https://plugins.jetbrains.com/plugin/26124-jsonsmith)
 
 <!-- Plugin description -->
 Generate classes/types from json strings.
