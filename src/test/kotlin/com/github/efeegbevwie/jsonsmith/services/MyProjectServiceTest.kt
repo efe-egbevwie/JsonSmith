@@ -4,9 +4,11 @@ import app.cash.turbine.test
 import com.efe.jsonSmith.languageParsers.ParsedType
 import com.efe.jsonSmith.targetLanguages.TargetLanguage
 import com.efe.jsonSmith.targetLanguages.enabledTargetLanguages
-import com.github.efeegbevwie.jsonsmith.services.MyProjectService.JsonSmithEvent
+import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -15,6 +17,7 @@ import kotlinx.serialization.json.JsonElement
 class MyProjectServiceTest : BasePlatformTestCase() {
     private val json = Json { prettyPrint = true }
     private lateinit var service: MyProjectService
+    private lateinit var serviceCoroutineScope: CoroutineScope
     private val validJson = """
     {
     	"id": "0001",
@@ -59,7 +62,8 @@ class MyProjectServiceTest : BasePlatformTestCase() {
 
     override fun setUp() {
         super.setUp()
-        service = MyProjectService(project)
+        serviceCoroutineScope = CoroutineScope(Dispatchers.IO)
+        service = MyProjectService(project = project, serviceCoroutineScope =  serviceCoroutineScope)
     }
 
     fun `test when valid json is formatted, json element flow should contain json element`() =
