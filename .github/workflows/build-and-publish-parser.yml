@@ -19,7 +19,7 @@ jobs:
             target: linuxX64
           - os: windows-latest
             target: mingwX64
-          - os: macos-13
+          - os: macos-latest
             target: macosX64
           - os: macos-latest
             target: macosArm64
