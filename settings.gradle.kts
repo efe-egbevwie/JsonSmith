@@ -15,7 +15,7 @@ pluginManagement {
             }
         }
         google()
-        maven ( "https://plugins.gradle.org/m2/" )
+        maven("https://plugins.gradle.org/m2/")
         gradlePluginPortal()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         mavenCentral()
@@ -40,3 +40,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "JsonSmith"
+
+include("parser")
+include("plugin")

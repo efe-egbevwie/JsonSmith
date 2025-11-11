@@ -5,6 +5,7 @@ junit5 = "5.8.2"
 turbine = "0.7.0"
 mockk = "1.13.3"
 kotlinCoroutines = "1.8.1"
+okio = "3.5.0"
 
 
 # plugins
@@ -14,12 +15,16 @@ kotlin = "2.1.20-Beta2"
 kover = "0.8.3"
 qodana = "2024.2.3"
 compose-multiplatform = "1.7.1"
+kotlinxSerializationJson = "1.8.0"
+
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 turbine = {module = "app.cash.turbine:turbine", version.ref = "turbine"}
 mockk = {module = "io.mockk:mockk", version.ref = "mockk"}
 kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinCoroutines" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 
 [bundles]
@@ -33,3 +38,6 @@ kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
 compose = {id = "org.jetbrains.compose", version.ref = "compose-multiplatform"}
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
