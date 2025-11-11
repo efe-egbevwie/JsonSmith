@@ -19,9 +19,9 @@ jobs:
             target: linuxX64
           - os: windows-latest
             target: mingwX64
-          - os: macos-latest
+          - os: macosX64-latest
             target: macosX64
-          - os: macos-latest
+          - os: macosArm64-latest
             target: macosArm64
 
     steps:
