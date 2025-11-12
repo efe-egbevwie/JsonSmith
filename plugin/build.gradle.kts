@@ -90,7 +90,7 @@ dependencies {
     implementation(compose.components.resources) {
         exclude(group = "org.jetbrains.kotlinx")
     }
-
+    implementation(libs.kodeView)
     testImplementation(libs.bundles.testing)
 }
 

@@ -4,7 +4,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-// Data structure to represent a flattened JSON tree item
 sealed class JsonTreeItem {
     /**
      * Represents the unique key for a JSON tree item, starting from the root and constructed
@@ -22,7 +21,7 @@ sealed class JsonTreeItem {
      * Indicates whether this node is expanded in the UI.
      * Only applicable for container types (Object and Array).
      */
-    abstract val expanded: Boolean
+    open val expanded: Boolean = false
 
     data class ObjectItem(
         override val nodePath: String,

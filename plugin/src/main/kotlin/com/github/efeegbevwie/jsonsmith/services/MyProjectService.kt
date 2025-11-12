@@ -1,17 +1,20 @@
 package com.github.efeegbevwie.jsonsmith.services
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.text.input.setTextAndSelectAll
 import androidx.compose.runtime.snapshotFlow
-//import com.efe.jsonSmith.languageParsers.ParsedType
-//import com.efe.jsonSmith.languageParsers.parseJsonToGoStruct
-//import com.efe.jsonSmith.languageParsers.parseJsonToJavaClass
-//import com.efe.jsonSmith.languageParsers.parseJsonToKotlinClass
-//import com.efe.jsonSmith.targetLanguages.TargetLanguage
-//import com.efe.jsonSmith.targetLanguages.TargetLanguageConfig
+import com.efe.jsonSmith.parser.languageParsers.ParsedType
+import com.efe.jsonSmith.parser.languageParsers.parseJsonToGoStruct
+import com.efe.jsonSmith.parser.languageParsers.parseJsonToJavaClass
+import com.efe.jsonSmith.parser.languageParsers.parseJsonToKotlinClass
+import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage
+import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage.*
+import com.efe.jsonSmith.parser.targetLanguages.TargetLanguageConfig
 import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
 import com.github.efeegbevwie.jsonsmith.models.JsonTreeItem
+import com.github.efeegbevwie.jsonsmith.models.SearchState
 import com.github.efeegbevwie.jsonsmith.services.fileSavers.SaveFileResult
 import com.github.efeegbevwie.jsonsmith.services.fileSavers.saveGeneratedTypesToFiles
 import com.github.efeegbevwie.jsonsmith.util.toClassNameCamelCase
@@ -23,17 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import com.efe.jsonSmith.parser.languageParsers.ParsedType
-import com.efe.jsonSmith.parser.languageParsers.parseJsonToGoStruct
-import com.efe.jsonSmith.parser.languageParsers.parseJsonToJavaClass
-import com.efe.jsonSmith.parser.languageParsers.parseJsonToKotlinClass
-import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage
-import com.efe.jsonSmith.parser.targetLanguages.TargetLanguageConfig
+import kotlinx.serialization.json.*
 import java.awt.Toolkit
 import java.awt.datatransfer.Clipboard
 import java.awt.datatransfer.StringSelection
@@ -45,7 +38,7 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
 
     private val json = Json { prettyPrint = true; }
 
-    private val targetLanguageFlow = MutableStateFlow<TargetLanguage>(TargetLanguage.Kotlin())
+    private val targetLanguageFlow = MutableStateFlow<TargetLanguage>(Kotlin())
     val targetLanguage: StateFlow<TargetLanguage> = targetLanguageFlow.asStateFlow()
 
     private val generatedTypeFlow = MutableStateFlow<ParsedType?>(null)
@@ -53,7 +46,6 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
 
     // For JSON structure
     private val jsonElementFlow = MutableStateFlow<JsonElement?>(null)
-    val jsonElement: StateFlow<JsonElement?> = jsonElementFlow.asStateFlow()
 
     // For JSON tree expanded state
     private val expandedNodesFlow = MutableStateFlow<Set<String>>(emptySet())
@@ -68,14 +60,22 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
     private val jsonStructureParsingEventsFlow = MutableStateFlow<JsonSmithEvent?>(null)
     val jsonStructureParsingEvents: StateFlow<JsonSmithEvent?> = jsonStructureParsingEventsFlow.asStateFlow()
 
-    private val flattenedJsonItemsFlow = MutableStateFlow< List<JsonTreeItem>>(emptyList())
+    private val flattenedJsonItemsFlow = MutableStateFlow<List<JsonTreeItem>>(emptyList())
     val flattenedJsonItems = flattenedJsonItemsFlow.asStateFlow()
+
+    // Search functionality
+    private val searchStateFlow = MutableStateFlow(SearchState())
+    val searchState: StateFlow<SearchState> = searchStateFlow.asStateFlow()
+
+    val jsonSearchQueryState = TextFieldState()
+    val jsonTreeLazyListState = LazyListState()
 
 
     init {
         with(serviceCoroutineScope) {
             launch { observeClassTitleText() }
             launch { observeTargetLanguageChanges() }
+            launch { observeSearchQueryChanges() }
             launch {
                 jsonParsingEvents.collect { event ->
                     if (event == null) return@collect
@@ -95,7 +95,6 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
         }
     }
 
-    fun getRandomNumber() = (1..100).random()
 
     fun setTargetLanguage(language: TargetLanguage) {
         targetLanguageFlow.update { language }
@@ -107,22 +106,22 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
     fun generateTypeFromJson(json: String) {
         jsonParsingEventsFlow.removeErrorParsingState()
         val generatedType = when (val targetLanguage = targetLanguageFlow.value) {
-            is TargetLanguage.Java -> parseJsonToJavaClass(
+            is Java -> parseJsonToJavaClass(
                 className = targetLanguage.targetLanguageConfig.className.ifEmpty { "JsonClass" },
                 json = json,
-                javaConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Java.JavaConfigOptions
+                javaConfig = targetLanguage.targetLanguageConfig as Java.JavaConfigOptions
             )
 
-            is TargetLanguage.Kotlin -> parseJsonToKotlinClass(
+            is Kotlin -> parseJsonToKotlinClass(
                 className = targetLanguage.targetLanguageConfig.className.ifEmpty { "JsonClass" },
                 json = json,
-                kotlinConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Kotlin.KotlinConfigOptions
+                kotlinConfig = targetLanguage.targetLanguageConfig as Kotlin.KotlinConfigOptions
             )
 
-            is TargetLanguage.Go -> parseJsonToGoStruct(
+            is Go -> parseJsonToGoStruct(
                 json = json,
                 structName = targetLanguage.targetLanguageConfig.className.ifEmpty { "JsonStruct" },
-                goConfig = targetLanguage.targetLanguageConfig as TargetLanguage.Go.GoConfigOptions
+                goConfig = targetLanguage.targetLanguageConfig as Go.GoConfigOptions
             )
         }
 
@@ -134,6 +133,7 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             generatedTypeFlow.update { generatedType }
         }
     }
+
     fun copyToClipboard(s: String) {
         val selection = StringSelection(s)
         runCatching {
@@ -147,6 +147,7 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             }
         }
     }
+
     fun saveGeneratedType(project: Project) {
         generatedTypeFlow.value?.let { parsedType ->
             val filesSaved: SaveFileResult = runCatching {
@@ -184,20 +185,19 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             if (jsonContent.text.toString().isBlank()) return
             val jsonElement = json.parseToJsonElement(jsonContent.text.toString())
             val formattedJson = json.encodeToString(JsonElement.serializer(), jsonElement).trim()
-            jsonContent.setTextAndPlaceCursorAtEnd(formattedJson)
+            jsonContent.setTextAndSelectAll(formattedJson)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
 
-
     fun updateTargetLanguageConfig(newConfig: TargetLanguageConfig) {
         targetLanguageFlow.update { currentTargetLanguage ->
             when (currentTargetLanguage) {
-                is TargetLanguage.Java -> TargetLanguage.Java(newConfig)
-                is TargetLanguage.Kotlin -> TargetLanguage.Kotlin(newConfig)
-                is TargetLanguage.Go -> TargetLanguage.Go(newConfig)
+                is Java -> Java(newConfig)
+                is Kotlin -> Kotlin(newConfig)
+                is Go -> Go(newConfig)
             }
         }
         if (generatedTypeFlow.value?.stringRepresentation?.isNotEmpty() == true) {
@@ -211,9 +211,10 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             jsonStructureParsingEventsFlow.removeErrorParsingState()
             val element = Json.parseToJsonElement(json)
             jsonElementFlow.update { element }
-            // Clear expanded nodes when parsing a new JSON structure
+
             expandedNodesFlow.update { emptySet() }
             updateFlattenedJson(jsonElement = element)
+            resetSearchData()
         } catch (e: Exception) {
             serviceCoroutineScope.launch {
                 jsonStructureParsingEventsFlow.sendParsingError()
@@ -222,19 +223,15 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
         }
     }
 
-    /**
-     * Toggle the expanded state of a JSON node
-     * @param nodePath The path to the node in the JSON tree
-     */
     fun toggleNodeExpanded(nodePath: String) {
         expandedNodesFlow.update { currentExpandedNodes ->
             if (currentExpandedNodes.contains(nodePath)) {
                 // When collapsing a node, also collapse all its children
                 val childrenToRemove = currentExpandedNodes.filter { childPath ->
                     childPath != nodePath && (
-                        childPath.startsWith("$nodePath.") || // Object children
-                        childPath.startsWith("$nodePath[")     // Array children
-                    )
+                            childPath.startsWith("$nodePath.") ||
+                                    childPath.startsWith("$nodePath[")
+                            )
                 }
                 currentExpandedNodes - nodePath - childrenToRemove
             } else {
@@ -246,7 +243,12 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
         updateFlattenedJson(jsonElement = jsonElementFlow.value)
     }
 
-    private fun updateFlattenedJson(jsonElement: JsonElement?){
+    fun clearSearchQuery() {
+        jsonSearchQueryState.setTextAndPlaceCursorAtEnd("")
+        resetSearchData()
+    }
+
+    private fun updateFlattenedJson(jsonElement: JsonElement?) {
         if (jsonElement == null) return
         val newFlattenedJson = flattenJsonTree(jsonElement = jsonElement, expandedNodes = expandedNodesFlow.value)
         flattenedJsonItemsFlow.update { newFlattenedJson }
@@ -257,18 +259,10 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
      * Flattens a hierarchical JSON tree structure into a list of `JsonTreeItem` instances. The method processes
      * JSON objects, arrays, and primitives, mapping each element to a flat representation that includes its path,
      * depth level, key (if present), and expansion state for UI usage.
-     *
-     * @param jsonElement The root `JsonElement` to flatten. This can be a `JsonObject`, `JsonArray`, or `JsonPrimitive`.
-     * @param expandedNodes A set of node paths that are marked as expanded. Determines whether nested elements should be included.
-     * @param nodePath The current node path in the JSON tree. Defaults to "root" for the top-level element.
-     * @param level The depth level of the current node within the JSON tree structure. Defaults to 0 for the root.
-     * @param key The key associated with the current node, if it is part of an object. Defaults to null.
-     * @param fromArray A flag indicating whether the current node originated from within an array. Defaults to false.
-     * @param arrayIndex The index of the current node if it is a part of an array. Defaults to null.
-     * @return A list of `JsonTreeItem` instances representing the flattened JSON tree structure.
      */
     private fun flattenJsonTree(
         jsonElement: JsonElement,
+        expandAll: Boolean = false,
         expandedNodes: Set<String>,
         nodePath: String = "root",
         level: Int = 0,
@@ -280,8 +274,7 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
 
         when (jsonElement) {
             is JsonObject -> {
-                // Add the object item itself
-                val isExpanded = expandedNodes.contains(nodePath)
+                val isExpanded: Boolean = expandedNodes.contains(nodePath) || expandAll
                 result.add(
                     JsonTreeItem.ObjectItem(
                         nodePath = nodePath,
@@ -295,11 +288,12 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
                 )
 
                 // If this node is expanded, add its children
-                if (expandedNodes.contains(nodePath)) {
+                if (isExpanded) {
                     jsonElement.entries.forEachIndexed { index, entry ->
                         val childPath = "$nodePath.${entry.key}"
                         result.addAll(
                             flattenJsonTree(
+                                expandAll = expandAll,
                                 jsonElement = entry.value,
                                 expandedNodes = expandedNodes,
                                 nodePath = childPath,
@@ -312,8 +306,7 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             }
 
             is JsonArray -> {
-                // Add the array item itself
-                val isExpanded = expandedNodes.contains(nodePath)
+                val isExpanded = expandedNodes.contains(nodePath) || expandAll
                 result.add(
                     JsonTreeItem.ArrayItem(
                         nodePath = nodePath,
@@ -327,11 +320,12 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
                 )
 
                 // If this node is expanded, add its children
-                if (expandedNodes.contains(nodePath)) {
+                if (isExpanded) {
                     jsonElement.forEachIndexed { index, element ->
                         val childPath = "$nodePath[$index]"
                         result.addAll(
                             flattenJsonTree(
+                                expandAll = expandAll,
                                 jsonElement = element,
                                 expandedNodes = expandedNodes,
                                 nodePath = childPath,
@@ -345,7 +339,6 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             }
 
             is JsonPrimitive -> {
-                // Add the primitive item
                 result.add(
                     JsonTreeItem.PrimitiveItem(
                         nodePath = nodePath,
@@ -363,7 +356,6 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
     }
 
 
-
     private fun timeOutEvent(event: JsonSmithEvent, eventsFlow: MutableStateFlow<JsonSmithEvent?>) {
         CoroutineScope(Dispatchers.Default).launch {
             delay(event.timeOut)
@@ -378,26 +370,26 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
             jsonParsingEventsFlow.removeErrorParsingState()
             val formattedClassName: String = newClassName.toString().toClassNameCamelCase()
             val newLanguageConfig = when (val currentLanguageConfig = targetLanguageFlow.value) {
-                is TargetLanguage.Java -> {
+                is Java -> {
                     val newJavaConfig =
-                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Java.JavaConfigOptions).copy(
+                        (currentLanguageConfig.targetLanguageConfig as Java.JavaConfigOptions).copy(
                             className = formattedClassName
                         )
 
                     currentLanguageConfig.copy(targetLanguageConfig = newJavaConfig)
                 }
 
-                is TargetLanguage.Kotlin -> {
+                is Kotlin -> {
                     val newKotlinConfig =
-                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Kotlin.KotlinConfigOptions).copy(
+                        (currentLanguageConfig.targetLanguageConfig as Kotlin.KotlinConfigOptions).copy(
                             className = formattedClassName
                         )
                     currentLanguageConfig.copy(targetLanguageConfig = newKotlinConfig)
                 }
 
-                is TargetLanguage.Go -> {
+                is Go -> {
                     val newGoConfig =
-                        (currentLanguageConfig.targetLanguageConfig as TargetLanguage.Go.GoConfigOptions).copy(
+                        (currentLanguageConfig.targetLanguageConfig as Go.GoConfigOptions).copy(
                             className = formattedClassName
                         )
                     currentLanguageConfig.copy(targetLanguageConfig = newGoConfig)
@@ -435,5 +427,124 @@ class MyProjectService(val project: Project, private val serviceCoroutineScope: 
     private suspend fun MutableStateFlow<JsonSmithEvent?>.sendFileSavedError() {
         emit(JsonSmithEvent.FileSavedError())
     }
-}
 
+
+    private suspend fun observeSearchQueryChanges() {
+        snapshotFlow { jsonSearchQueryState.text }.collect {
+            delay(timeMillis = 500)
+            val query: String = it.toString()
+            if (query.isEmpty()) {
+                if (flattenedJsonItems.value.any { jsonItem -> jsonItem.expanded }) {
+                    return@collect
+                } else {
+                    collapseAllJsonItems()
+                    resetSearchData()
+                    return@collect
+                }
+            }
+            expandAllJsonItems()
+            val flattenedJson: List<JsonTreeItem> = flattenedJsonItems.value
+            val matchedItemIndexes: List<Int> = flattenedJson.mapIndexed { index, item ->
+                val matched = itemMatchesSearch(item = item, query = query)
+                if (matched) index else null
+            }.filterNotNull()
+
+            val matchedItemIndex = if (matchedItemIndexes.isNotEmpty()) matchedItemIndexes.first() else null
+
+            searchStateFlow.update { currentState ->
+                currentState.copy(
+                    matchedItemsIndices = matchedItemIndexes,
+                    currentMatchIndex = 0,
+                    matchedItemIndex = matchedItemIndex
+                )
+            }
+        }
+    }
+
+    private fun expandAllJsonItems() {
+        val jsonElement = jsonElementFlow.value ?: return
+        val newFlattenedJson =
+            flattenJsonTree(jsonElement = jsonElement, expandedNodes = expandedNodesFlow.value, expandAll = true)
+        flattenedJsonItemsFlow.update { newFlattenedJson }
+    }
+
+    private fun collapseAllJsonItems() {
+        val jsonElement = jsonElementFlow.value ?: return
+        val newFlattenedJson =
+            flattenJsonTree(jsonElement = jsonElement, expandedNodes = expandedNodesFlow.value, expandAll = false)
+        flattenedJsonItemsFlow.update { newFlattenedJson }
+    }
+
+    private fun resetSearchData() {
+        searchStateFlow.update {
+            it.copy(
+                matchedItemsIndices = emptyList(),
+                currentMatchIndex = 0,
+                matchedItemIndex = null
+            )
+        }
+    }
+
+
+    fun navigateToNextMatch(): Boolean {
+        val currentState: SearchState = searchStateFlow.value
+        val matchedIndices: List<Int> = currentState.matchedItemsIndices
+        val currentIndex: Int = currentState.currentMatchIndex
+
+        if (matchedIndices.isEmpty() || currentIndex >= matchedIndices.size - 1) {
+            return false
+        }
+
+        val nextIndex = currentIndex + 1
+        searchStateFlow.update {
+            it.copy(
+                currentMatchIndex = nextIndex,
+                matchedItemIndex = matchedIndices[nextIndex]
+            )
+        }
+        return true
+    }
+
+
+    fun navigateToPreviousMatch(): Boolean {
+        val currentState = searchStateFlow.value
+        val matchedIndices = currentState.matchedItemsIndices
+        val currentIndex = currentState.currentMatchIndex
+
+        if (matchedIndices.isEmpty() || currentIndex <= 0) {
+            return false
+        }
+
+        val previousIndex = currentIndex - 1
+        searchStateFlow.update {
+            it.copy(
+                currentMatchIndex = previousIndex,
+                matchedItemIndex = matchedIndices[previousIndex]
+            )
+        }
+        return true
+    }
+
+
+    fun itemMatchesSearch(item: JsonTreeItem, query: String): Boolean {
+        if (query.isBlank()) return false
+
+        val lowercaseQuery = query.lowercase()
+
+        return when (item) {
+            is JsonTreeItem.ObjectItem -> {
+                (item.key?.lowercase()?.contains(lowercaseQuery) ?: false)
+            }
+
+            is JsonTreeItem.ArrayItem -> {
+                (item.key?.lowercase()?.contains(lowercaseQuery) ?: false)
+            }
+
+            is JsonTreeItem.PrimitiveItem -> {
+                val keyMatches = item.key.lowercase().contains(lowercaseQuery)
+                val valueMatches = item.jsonPrimitive.content.lowercase().contains(lowercaseQuery)
+                keyMatches || valueMatches
+            }
+        }
+    }
+}

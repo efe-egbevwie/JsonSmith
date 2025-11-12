@@ -7,7 +7,7 @@
 #
 # Workflow is triggered manually.
 
-name: Run UI Tests
+name: Run plugin UI Tests
 on:
   workflow_dispatch
 

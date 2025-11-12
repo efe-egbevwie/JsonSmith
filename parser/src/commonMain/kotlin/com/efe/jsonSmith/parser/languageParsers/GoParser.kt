@@ -136,14 +136,26 @@ private fun determineType(
         }
 
         jsonElement is JsonArray -> {
-            val firstElement = jsonElement.first().jsonObject
-            parseGoJsonObject(
-                jsonObject = firstElement,
-                structName = elementName,
-                parsedStructs = parsedStructs,
-                config = config
-            )
-            "[]$elementName"
+            val firstElement: JsonElement? = jsonElement.firstOrNull()
+            if (firstElement is JsonObject){
+                parseGoJsonObject(
+                    jsonObject = firstElement,
+                    structName = elementName,
+                    parsedStructs = parsedStructs,
+                    config = config
+                )
+                "[]$elementName"
+            }else if (firstElement != null){
+                val elementType = determineType(
+                    jsonElement = firstElement,
+                    elementName = elementName,
+                    parsedStructs = parsedStructs,
+                    config = config
+                )
+                "[]$elementType"
+            }else{
+                "[]interface{}"
+            }
         }
 
         else -> "interface{}"

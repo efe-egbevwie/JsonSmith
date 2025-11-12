@@ -2,20 +2,27 @@ package com.github.efeegbevwie.jsonsmith.toolWindow
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.efeegbevwie.jsonsmith.models.JsonTreeItem
 import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
+import com.github.efeegbevwie.jsonsmith.models.SearchState
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.Res
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.boolType
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.numeric
@@ -26,14 +33,26 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+interface JsonStructureUiEvents {
+    fun onParseJsonStructureClicked()
+    fun onFormatJsonClicked(jsonInput: TextFieldState)
+    fun onNavigateToNextMatch(): Boolean
+    fun onNavigateToPreviousMatch(): Boolean
+    fun onNodeExpandedToggle(nodePath: String)
+
+    fun onCancelSearch()
+    fun jsonItemMatchesSearch(item: JsonTreeItem, query: String): Boolean
+}
+
 @Composable
 fun JsonStructureContent(
     jsonInput: TextFieldState,
     flattenedJson: List<JsonTreeItem>,
+    jsonSearchTextState: TextFieldState,
+    lazyListState: LazyListState,
     event: JsonSmithEvent? = null,
-    onNodeExpandedToggle: (String) -> Unit,
-    onParseJsonStructureClicked: () -> Unit,
-    onFormatJsonClicked: (jsonInput: TextFieldState) -> Unit,
+    searchState: SearchState,
+    events: JsonStructureUiEvents,
     modifier: Modifier = Modifier
         .fillMaxSize()
         .padding(10.dp)
@@ -66,7 +85,7 @@ fun JsonStructureContent(
             OutlinedButton(
                 onClick = {
                     if (jsonInput.text.isNotBlank()) {
-                        onParseJsonStructureClicked()
+                        events.onParseJsonStructureClicked()
                     }
                 }
             ) {
@@ -76,7 +95,7 @@ fun JsonStructureContent(
             OutlinedButton(
                 onClick = {
                     if (jsonInput.text.isNotBlank()) {
-                        onFormatJsonClicked(jsonInput)
+                        events.onFormatJsonClicked(jsonInput)
                     }
                 }
             ) {
@@ -89,7 +108,15 @@ fun JsonStructureContent(
         AnimatedVisibility(visible = flattenedJson.isNotEmpty()) {
             JsonTreeLazyColumn(
                 flattenedJson = flattenedJson,
-                onNodeExpandedToggle = onNodeExpandedToggle,
+                onNodeExpandedToggle = {
+                    events.onNodeExpandedToggle(nodePath = it)
+                },
+                searchState = searchState,
+                lazyListState = lazyListState,
+                jsonSearchTextState = jsonSearchTextState,
+                onNavigateToNextMatch = { events.onNavigateToNextMatch() },
+                onCancelSearch = { events.onCancelSearch() },
+                onNavigateToPreviousMatch = { events.onNavigateToPreviousMatch() },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -99,52 +126,185 @@ fun JsonStructureContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun JsonTreeLazyColumn(
+    modifier: Modifier = Modifier,
+    jsonSearchTextState: TextFieldState,
+    lazyListState: LazyListState,
+    onCancelSearch: () -> Unit,
     flattenedJson: List<JsonTreeItem>,
     onNodeExpandedToggle: (String) -> Unit,
-    modifier: Modifier = Modifier
+    searchState: SearchState,
+    onNavigateToNextMatch: () -> Boolean,
+    onNavigateToPreviousMatch: () -> Boolean,
 ) {
+    LaunchedEffect(searchState.matchedItemIndex, searchState.currentMatchIndex) {
+        searchState.matchedItemIndex?.let { index ->
+            if (index == searchState.matchedItemsIndices.first()) {
+                lazyListState.scrollToItem(
+                    index = index,
+                    scrollOffset = 0
+                )
+            } else {
+                lazyListState.scrollToItem(
+                    index = index,
+                    scrollOffset = 0
+                )
+            }
+        }
+    }
 
-    LazyColumn(modifier = modifier) {
-        items(
-            items = flattenedJson,
-            key = { item: JsonTreeItem ->
-                item.nodePath.plus(item.level)
-            },
-            contentType = { it }
-        ) { item ->
+    Column(modifier = modifier) {
 
-            val indentModifier = Modifier
-                .padding(start = (item.level * 16).dp)
-                .animateItem()
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            JsonSearchField(
+                modifier = Modifier.weight(2f),
+                jsonSearchTextState = jsonSearchTextState,
+                onCancelSearch = onCancelSearch,
+                onNavigateToNextMatch = onNavigateToNextMatch,
+            )
 
-            when (item) {
-                is JsonTreeItem.ObjectItem -> {
-                    JsonObjectItemRow(
-                        item = item,
-                        expanded = item.expanded,
-                        onNodeExpandedToggle = onNodeExpandedToggle,
-                        modifier = indentModifier
-                    )
-                }
+            if (searchState.totalMatches > 0) {
+                SearchMatchedItemsIndicator(
+                    modifier = Modifier.weight(1f),
+                    currentMatchNumber = searchState.currentMatchedIndex,
+                    totalMatches = searchState.totalMatches,
+                    hasPreviousMatch = searchState.hasPreviousMatch,
+                    hasNextMatch = searchState.hasNextMatch,
+                    onNavigateToNextMatch = onNavigateToNextMatch,
+                    onNavigateToPreviousMatch = onNavigateToPreviousMatch,
+                )
+            }
+        }
 
-                is JsonTreeItem.ArrayItem -> {
-                    JsonArrayItemRow(
-                        item = item,
-                        expanded = item.expanded,
-                        onNodeExpandedToggle = onNodeExpandedToggle,
-                        modifier = indentModifier
-                    )
-                }
+        Row {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier.fillMaxWidth(0.95f)
+            ) {
+                itemsIndexed(
+                    items = flattenedJson,
+                    key = { index: Int, item: JsonTreeItem ->
+                        item.nodePath.plus(item.level)
+                    },
+                    contentType = { index: Int, item: JsonTreeItem -> index }
+                ) { index: Int, item: JsonTreeItem ->
+                    val isMatched = searchState.matchedItemsIndices.contains(index)
 
-                is JsonTreeItem.PrimitiveItem -> {
-                    AnimatedVisibility(visible = true) {
-                        JsonPrimitiveItemRow(
-                            item = item,
-                            modifier = indentModifier
+                    val indentModifier = Modifier
+                        .padding(start = (item.level * 16).dp)
+                        .then(
+                            if (isMatched) Modifier.background(Color.Yellow.copy(alpha = 0.3f))
+                            else Modifier
                         )
+
+                    when (item) {
+                        is JsonTreeItem.ObjectItem -> {
+                            JsonObjectItemRow(
+                                item = item,
+                                expanded = item.expanded,
+                                onNodeExpandedToggle = onNodeExpandedToggle,
+                                modifier = indentModifier
+                            )
+                        }
+
+                        is JsonTreeItem.ArrayItem -> {
+                            JsonArrayItemRow(
+                                item = item,
+                                expanded = item.expanded,
+                                onNodeExpandedToggle = onNodeExpandedToggle,
+                                modifier = indentModifier
+                            )
+                        }
+
+                        is JsonTreeItem.PrimitiveItem -> {
+                            AnimatedVisibility(visible = true) {
+                                JsonPrimitiveItemRow(
+                                    item = item,
+                                    modifier = indentModifier
+                                )
+                            }
+                        }
                     }
                 }
             }
+
+            VerticalScrollbar(
+                scrollState = lazyListState,
+            )
+        }
+    }
+}
+
+@Composable
+private fun JsonSearchField(
+    modifier: Modifier = Modifier,
+    jsonSearchTextState: TextFieldState,
+    onCancelSearch: () -> Unit = {},
+    onNavigateToNextMatch: () -> Boolean,
+) {
+    TextField(
+        state = jsonSearchTextState,
+        modifier = modifier,
+        placeholder = {
+            Text("Search by key or value")
+        },
+        trailingIcon = {
+            Icon(
+                key = AllIconsKeys.Actions.Cancel,
+                contentDescription = "Cancel",
+                modifier = Modifier
+                    .clickable(
+                        enabled = jsonSearchTextState.text.isNotBlank()
+                    ) {
+                        onCancelSearch()
+                    }
+            )
+        },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        onKeyboardAction = {
+            onNavigateToNextMatch()
+        }
+    )
+}
+
+@Composable
+private fun SearchMatchedItemsIndicator(
+    modifier: Modifier = Modifier,
+    currentMatchNumber: Int,
+    totalMatches: Int,
+    hasPreviousMatch: Boolean,
+    hasNextMatch: Boolean,
+    onNavigateToNextMatch: () -> Boolean,
+    onNavigateToPreviousMatch: () -> Boolean,
+) {
+    Row(modifier = modifier) {
+        Text(
+            text = "$currentMatchNumber/$totalMatches",
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+
+        IconButton(
+            onClick = { onNavigateToPreviousMatch() },
+            enabled = hasPreviousMatch
+        ) {
+            Icon(
+                key = AllIconsKeys.Actions.MoveUp,
+                contentDescription = "Previous match"
+            )
+        }
+
+        IconButton(
+            onClick = { onNavigateToNextMatch() },
+            enabled = hasNextMatch
+        ) {
+            Icon(
+                key = AllIconsKeys.Actions.MoveDown,
+                contentDescription = "Next match"
+            )
         }
     }
 }

@@ -2,6 +2,9 @@ package com.github.efeegbevwie.jsonsmith.toolWindow
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,17 +14,33 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.efe.jsonSmith.parser.languageParsers.ParsedType
 import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage
+import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage.*
 import com.efe.jsonSmith.parser.targetLanguages.TargetLanguageConfig
 import com.efe.jsonSmith.parser.targetLanguages.displayName
 import com.efe.jsonSmith.parser.targetLanguages.enabledTargetLanguages
 import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
+import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.SyntaxLanguage
+import dev.snipme.highlights.model.SyntaxTheme
+import dev.snipme.highlights.model.SyntaxThemes
+import dev.snipme.kodeview.view.CodeTextView
+import generateAnnotatedString
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.ErrorBanner
@@ -179,6 +198,7 @@ fun JsonParsingToolWindowContent(
                             val showCopyIcon = generatedType?.parsedClasses?.size?.let { it > 1 } ?: false
                             generatedType?.parsedClasses?.forEach { parsedType ->
                                 TypeItem(
+                                    targetLanguage = targetLanguage,
                                     typeContent = parsedType.classBody,
                                     showCopyIcon = showCopyIcon,
                                     onCopyGeneratedTypeClicked = onCopyGeneratedTypeClicked
@@ -197,6 +217,7 @@ fun JsonParsingToolWindowContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TypeItem(
+    targetLanguage: TargetLanguage,
     typeContent: String,
     showCopyIcon: Boolean,
     onCopyGeneratedTypeClicked: (type: String) -> Unit,
@@ -218,12 +239,42 @@ private fun TypeItem(
                 }
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        SelectionContainer {
-            Text(
-                text = typeContent.trimIndent(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        Spacer(modifier = Modifier.height(2.dp))
+        val highlights =
+            Highlights
+                .Builder(code = typeContent.trimIndent())
+                .language(targetLanguage.getCodeTextLanguage())
+                .theme(SyntaxThemes.darcula(darkMode = isSystemInDarkTheme()))
+                .build()
+
+        CodeText(highlights = highlights, modifier = Modifier.fillMaxWidth())
     }
 }
+
+@Composable
+private fun CodeText(
+    modifier: Modifier = Modifier.background(Color.Transparent),
+    highlights: Highlights
+) {
+    var textState by remember {
+        mutableStateOf(AnnotatedString(highlights.getCode()))
+    }
+
+    LaunchedEffect(highlights) {
+        textState = highlights
+            .getHighlights()
+            .generateAnnotatedString(highlights.getCode())
+    }
+
+    Text(
+        modifier = modifier,
+        text = textState
+    )
+}
+
+private fun TargetLanguage.getCodeTextLanguage(): SyntaxLanguage =
+     when (this) {
+        is Go -> SyntaxLanguage.GO
+        is Java -> SyntaxLanguage.JAVA
+        is Kotlin -> SyntaxLanguage.KOTLIN
+    }
