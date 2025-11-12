@@ -83,7 +83,7 @@ dependencies {
     implementation(compose.desktop.linux_x64) {
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3") {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0") {
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
     }
     implementation(project(":parser"))
