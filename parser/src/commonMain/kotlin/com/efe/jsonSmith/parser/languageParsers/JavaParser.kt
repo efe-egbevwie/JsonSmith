@@ -135,7 +135,7 @@ private fun parseJavaJsonObject(
 
 
     val finalType = buildString {
-        imports?.let { append(it) }
+        imports?.let { appendLine(it) }
         appendLine("\n")
         appendLine(parsedClasses.values.reversed().joinToString(separator = "\n\n"))
     }

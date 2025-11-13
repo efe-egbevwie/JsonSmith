@@ -2,31 +2,14 @@ package com.github.efeegbevwie.jsonsmith.toolWindow
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.efe.jsonSmith.parser.languageParsers.ParsedType
 import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage
@@ -37,20 +20,11 @@ import com.efe.jsonSmith.parser.targetLanguages.enabledTargetLanguages
 import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxLanguage
-import dev.snipme.highlights.model.SyntaxTheme
 import dev.snipme.highlights.model.SyntaxThemes
-import dev.snipme.kodeview.view.CodeTextView
 import generateAnnotatedString
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Outline
-import org.jetbrains.jewel.ui.component.Dropdown
-import org.jetbrains.jewel.ui.component.ErrorBanner
-import org.jetbrains.jewel.ui.component.IconActionButton
-import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.SuccessBanner
-import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.TextArea
-import org.jetbrains.jewel.ui.component.TextField
-import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -121,7 +95,7 @@ fun JsonParsingToolWindowContent(
             Text(text = targetLanguage.displayName())
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         LanguageConfig(
             targetLanguage = targetLanguage,
@@ -129,7 +103,7 @@ fun JsonParsingToolWindowContent(
             onConfigChanged = onLanguageConfigChanged
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
@@ -154,12 +128,12 @@ fun JsonParsingToolWindowContent(
         }
 
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         AnimatedVisibility(visible = generatedType?.stringRepresentation?.isNotEmpty() == true) {
             Column(
                 modifier = Modifier
-                    .padding(bottom = 20.dp)
+                    .padding(bottom = 10.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                     IconActionButton(
@@ -191,21 +165,52 @@ fun JsonParsingToolWindowContent(
                     VerticallyScrollableContainer {
                         generatedType ?: return@VerticallyScrollableContainer
                         Column {
-                            if (generatedType.imports?.isNotBlank() == true) {
-                                Text(generatedType.imports.orEmpty())
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                            val showCopyIcon = generatedType?.parsedClasses?.size?.let { it > 1 } ?: false
-                            generatedType?.parsedClasses?.forEach { parsedType ->
-                                TypeItem(
-                                    targetLanguage = targetLanguage,
-                                    typeContent = parsedType.classBody,
-                                    showCopyIcon = showCopyIcon,
-                                    onCopyGeneratedTypeClicked = onCopyGeneratedTypeClicked
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                val generatedCode: String = buildString {
+                                    val imports: String? = generatedType.imports
+                                    val types: String =
+                                        generatedType.parsedClasses.joinToString(separator = " ") { (className, classBody) ->
+                                            classBody.plus("\n")
+                                        }
+
+                                    imports?.let {
+                                        appendLine(it)
+                                        appendLine()
+                                    }
+                                    appendLine(types)
+                                }
+
+                                val highlights =
+                                    Highlights
+                                        .Builder(code = generatedCode.trimIndent())
+                                        .language(targetLanguage.getCodeTextLanguage())
+                                        .theme(SyntaxThemes.darcula(darkMode = isSystemInDarkTheme()))
+                                        .build()
+
+                                val currentText = TextFieldValue(
+                                    annotatedString = highlights.getHighlights()
+                                        .generateAnnotatedString(code = highlights.getCode())
                                 )
+                                val linesCount = currentText.annotatedString.count { it == '\n' }
+
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxHeight(),
+                                    color = JewelTheme.globalColors.text.disabled,
+                                    fontWeight = FontWeight.Light,
+                                    text = IntRange(1, linesCount).joinToString(separator = "\n"),
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+
+                                Column {
+                                    SelectionContainer(modifier = Modifier) {
+                                        Text(
+                                            text = currentText.annotatedString
+                                        )
+                                    }
+                                }
                             }
                         }
-
                     }
                 }
             }
@@ -213,67 +218,8 @@ fun JsonParsingToolWindowContent(
     }
 }
 
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun TypeItem(
-    targetLanguage: TargetLanguage,
-    typeContent: String,
-    showCopyIcon: Boolean,
-    onCopyGeneratedTypeClicked: (type: String) -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth()
-        .padding(top = 8.dp, bottom = 8.dp)
-) {
-    Column(modifier = modifier) {
-        if (showCopyIcon) {
-            IconActionButton(
-                key = AllIconsKeys.Actions.Copy,
-                contentDescription = "Copy",
-                onClick = {
-                    if (typeContent.isNotBlank()) {
-                        onCopyGeneratedTypeClicked(typeContent)
-                    }
-                },
-                tooltip = {
-                    Text(text = "Copy")
-                }
-            )
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        val highlights =
-            Highlights
-                .Builder(code = typeContent.trimIndent())
-                .language(targetLanguage.getCodeTextLanguage())
-                .theme(SyntaxThemes.darcula(darkMode = isSystemInDarkTheme()))
-                .build()
-
-        CodeText(highlights = highlights, modifier = Modifier.fillMaxWidth())
-    }
-}
-
-@Composable
-private fun CodeText(
-    modifier: Modifier = Modifier.background(Color.Transparent),
-    highlights: Highlights
-) {
-    var textState by remember {
-        mutableStateOf(AnnotatedString(highlights.getCode()))
-    }
-
-    LaunchedEffect(highlights) {
-        textState = highlights
-            .getHighlights()
-            .generateAnnotatedString(highlights.getCode())
-    }
-
-    Text(
-        modifier = modifier,
-        text = textState
-    )
-}
-
 private fun TargetLanguage.getCodeTextLanguage(): SyntaxLanguage =
-     when (this) {
+    when (this) {
         is Go -> SyntaxLanguage.GO
         is Java -> SyntaxLanguage.JAVA
         is Kotlin -> SyntaxLanguage.KOTLIN

@@ -2,10 +2,8 @@ name: Build and Release Parser Native Binaries
 
 on:
   push:
-    branches: [ main ]
     tags:
       - "v*"
-  pull_request:
   workflow_dispatch:
 
 jobs:
