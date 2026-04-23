@@ -91,6 +91,9 @@ dependencies {
         exclude(group = "org.jetbrains.kotlinx")
     }
     implementation(libs.kodeView)
+    implementation(libs.jsonTree){
+        exclude(group = "org.jetbrains.kotlinx")
+    }
     testImplementation(libs.bundles.testing)
 }
 

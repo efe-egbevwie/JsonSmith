@@ -16,6 +16,7 @@ kover = "0.8.3"
 qodana = "2024.2.3"
 compose-multiplatform = "1.7.1"
 kotlinxSerializationJson = "1.8.0"
+jsonTree = "2.5.0"
 
 
 [libraries]
@@ -26,6 +27,7 @@ kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-te
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kodeView = {module = "dev.snipme:kodeview", version.ref = "kodeView"}
+jsonTree = {module = "com.sebastianneubauer.jsontree:jsontree-jvm", version.ref = "jsonTree"}
 
 [bundles]
 testing = ["junit", "kotlin-coroutines-test", "turbine", "mockk"]

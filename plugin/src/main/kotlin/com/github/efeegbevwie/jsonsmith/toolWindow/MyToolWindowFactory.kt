@@ -3,10 +3,17 @@ package com.github.efeegbevwie.jsonsmith.toolWindow
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.*
 import com.efe.jsonSmith.parser.languageParsers.ParsedType
+import com.efe.jsonSmith.parser.structureParser.JsonArrayStructure
 import com.efe.jsonSmith.parser.targetLanguages.TargetLanguage
+import com.github.efeegbevwie.jsonsmith.models.FilterOperation
 import com.github.efeegbevwie.jsonsmith.models.JsonTreeItem
 import com.github.efeegbevwie.jsonsmith.services.MyProjectService
 import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
+import com.github.efeegbevwie.jsonsmith.services.JsonQueryState
+import com.github.efeegbevwie.jsonsmith.services.JsonStructureSearchResults
+import com.github.efeegbevwie.jsonsmith.services.JsonStructureState
+import com.github.efeegbevwie.jsonsmith.services.JsonTypeGeneratorState
+import kotlinx.serialization.json.JsonArray
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -21,8 +28,9 @@ class MyToolWindowFactory : ToolWindowFactory {
         val service = toolWindow.project.service<MyProjectService>()
 
         toolWindow.addComposeTab(tabDisplayName = "Parse") {
-            val generatedType: ParsedType? by service.generatedType.collectAsState()
-            val targetLanguage: TargetLanguage by service.targetLanguage.collectAsState()
+            val typeGeneratorState: JsonTypeGeneratorState by service.jsonTypeGeneratorState.collectAsState()
+            val generatedType: ParsedType? = typeGeneratorState.generatedType
+            val targetLanguage: TargetLanguage = typeGeneratorState.targetLanguage
             val event: JsonSmithEvent? by service.jsonParsingEvents.collectAsState(initial = null)
 
             SwingBridgeTheme {
@@ -53,8 +61,9 @@ class MyToolWindowFactory : ToolWindowFactory {
 
         toolWindow.addComposeTab(tabDisplayName = "View Structure") {
             val jsonStructureEvents: JsonSmithEvent? by service.jsonStructureParsingEvents.collectAsState(initial = null)
-            val flattenedJson: List<JsonTreeItem> by service.flattenedJsonItems.collectAsState()
-            val searchState by service.searchState.collectAsState()
+            val jsonStructureState: JsonStructureState by service.jsonStructureState.collectAsState()
+            val flattenedJson: List<JsonTreeItem> = jsonStructureState.flattenedJson
+            val searchState: JsonStructureSearchResults = jsonStructureState.searchResults
 
             val jsonStructureUiEvents = object : JsonStructureUiEvents {
                 override fun onParseJsonStructureClicked() {
@@ -80,6 +89,7 @@ class MyToolWindowFactory : ToolWindowFactory {
                 override fun onCancelSearch() {
                     service.clearSearchQuery()
                 }
+
                 override fun jsonItemMatchesSearch(
                     item: JsonTreeItem,
                     query: String
@@ -93,14 +103,56 @@ class MyToolWindowFactory : ToolWindowFactory {
                     jsonInput = service.jsonInput,
                     flattenedJson = flattenedJson,
                     event = jsonStructureEvents,
-                    searchState = searchState,
+                    searchResults = searchState,
                     lazyListState = service.jsonTreeLazyListState,
                     jsonSearchTextState = service.jsonSearchQueryState,
                     events = jsonStructureUiEvents,
                 )
             }
         }
-    }
+
+        toolWindow.addComposeTab(tabDisplayName = "Query") {
+            val jsonQueryState: JsonQueryState by service.jsonQueryState.collectAsState()
+            val jsonArrayStructure: JsonArrayStructure? = jsonQueryState.jsonArrayStructure
+            val filteredJsonArray: JsonArray? = jsonQueryState.filteredJsonArray
+            val selectedFilterOperation: FilterOperation? = jsonQueryState.selectedFilterOperation
+            val suggestions: List<String> = jsonQueryState.queryKeySuggestions
+            val encodedJson: String? = jsonQueryState.encodedJson
+            val availableOperations: List<FilterOperation> = jsonQueryState.availableOperations
+            val isAutoCompleteVisible = jsonQueryState.isJsonFilterSuggestionsVisible
+
+            SwingBridgeTheme {
+                JsonQueryUi(
+                    jsonInput = service.jsonInput,
+                    jsonArrayStructure = jsonArrayStructure,
+                    filteredJsonArray = filteredJsonArray,
+                    filterKeyState = service.jsonQueryKeyState,
+                    filterValueState = service.filterValueState,
+                    filterSecondValueState = service.filterSecondValueState,
+                    selectedFilterOperation = selectedFilterOperation,
+                    suggestions = suggestions,
+                    encodedJson = encodedJson,
+                    isAutocompleteDropdownVisible = isAutoCompleteVisible,
+                    availableOperations = availableOperations,
+                    onParseJsonClicked = {
+                        service.parseJsonForQuery()
+                    },
+                    onFilterOperationSelected = { operation ->
+                        service.setSelectedFilterOperation(operation)
+                    },
+                    onApplyFilterClicked = {
+                        service.applyFilter()
+                    },
+                    onClearFilerClicked = {
+                        service.resetFilterState()
+                    },
+                    onSuggestionSelected = {
+                        service.onFilterSuggestionSelected(it)
+                    }
+                )
+            }
+        }
+    } 
 
     override fun shouldBeAvailable(project: Project) = true
 }

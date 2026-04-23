@@ -24,4 +24,10 @@ sealed class JsonSmithEvent {
         override val message: String = "Error saving files",
         override val errorEvent: Boolean = true
     ) : JsonSmithEvent()
+
+    data class JsonFilterFailed(
+        override val message: String = "Failed to apply filter",
+        override val timeOut: Duration = 3.seconds,
+        override val errorEvent: Boolean = true
+    ) : JsonSmithEvent()
 }

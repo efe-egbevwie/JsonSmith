@@ -46,7 +46,7 @@ sealed class JsonTreeItem {
     data class PrimitiveItem(
         override val nodePath: String,
         override val level: Int,
-        override val expanded: Boolean = false, // Primitive items can't be expanded
+        override val expanded: Boolean = false,
         val jsonPrimitive: JsonPrimitive,
         val key: String,
         val fromArray: Boolean = false,

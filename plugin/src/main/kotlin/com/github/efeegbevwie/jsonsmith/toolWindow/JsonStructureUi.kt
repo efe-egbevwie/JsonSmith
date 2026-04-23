@@ -22,11 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.efeegbevwie.jsonsmith.models.JsonTreeItem
 import com.github.efeegbevwie.jsonsmith.models.JsonSmithEvent
-import com.github.efeegbevwie.jsonsmith.models.SearchState
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.Res
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.boolType
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.numeric
 import com.github.efeegbevwie.jsonsmith.plugin.generated.resources.string
+import com.github.efeegbevwie.jsonsmith.services.JsonStructureSearchResults
 import kotlinx.serialization.json.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.jewel.ui.Outline
@@ -51,7 +51,7 @@ fun JsonStructureContent(
     jsonSearchTextState: TextFieldState,
     lazyListState: LazyListState,
     event: JsonSmithEvent? = null,
-    searchState: SearchState,
+    searchResults: JsonStructureSearchResults,
     events: JsonStructureUiEvents,
     modifier: Modifier = Modifier
         .fillMaxSize()
@@ -111,7 +111,7 @@ fun JsonStructureContent(
                 onNodeExpandedToggle = {
                     events.onNodeExpandedToggle(nodePath = it)
                 },
-                searchState = searchState,
+                searchResults = searchResults,
                 lazyListState = lazyListState,
                 jsonSearchTextState = jsonSearchTextState,
                 onNavigateToNextMatch = { events.onNavigateToNextMatch() },
@@ -132,13 +132,13 @@ private fun JsonTreeLazyColumn(
     onCancelSearch: () -> Unit,
     flattenedJson: List<JsonTreeItem>,
     onNodeExpandedToggle: (String) -> Unit,
-    searchState: SearchState,
+    searchResults: JsonStructureSearchResults,
     onNavigateToNextMatch: () -> Boolean,
     onNavigateToPreviousMatch: () -> Boolean,
 ) {
-    LaunchedEffect(searchState.matchedItemIndex, searchState.currentMatchIndex) {
-        searchState.matchedItemIndex?.let { index ->
-            if (index == searchState.matchedItemsIndices.first()) {
+    LaunchedEffect(searchResults.matchedItemIndex, searchResults.currentMatchIndex) {
+        searchResults.matchedItemIndex?.let { index ->
+            if (index == searchResults.matchedItemsIndices.first()) {
                 lazyListState.scrollToItem(
                     index = index,
                     scrollOffset = 0
@@ -166,13 +166,13 @@ private fun JsonTreeLazyColumn(
                 onNavigateToNextMatch = onNavigateToNextMatch,
             )
 
-            if (searchState.totalMatches > 0) {
+            if (searchResults.totalMatches > 0) {
                 SearchMatchedItemsIndicator(
                     modifier = Modifier.weight(1f),
-                    currentMatchNumber = searchState.currentMatchedIndex,
-                    totalMatches = searchState.totalMatches,
-                    hasPreviousMatch = searchState.hasPreviousMatch,
-                    hasNextMatch = searchState.hasNextMatch,
+                    currentMatchNumber = searchResults.currentMatchedIndex,
+                    totalMatches = searchResults.totalMatches,
+                    hasPreviousMatch = searchResults.hasPreviousMatch,
+                    hasNextMatch = searchResults.hasNextMatch,
                     onNavigateToNextMatch = onNavigateToNextMatch,
                     onNavigateToPreviousMatch = onNavigateToPreviousMatch,
                 )
@@ -191,7 +191,7 @@ private fun JsonTreeLazyColumn(
                     },
                     contentType = { index: Int, item: JsonTreeItem -> index }
                 ) { index: Int, item: JsonTreeItem ->
-                    val isMatched = searchState.matchedItemsIndices.contains(index)
+                    val isMatched = searchResults.matchedItemsIndices.contains(index)
 
                     val indentModifier = Modifier
                         .padding(start = (item.level * 16).dp)
